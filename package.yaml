@@ -25,7 +25,7 @@ library:
  
 executables:
   ppm:
-    main:                PPM.hs
+    main:                PPMClassifier.hs
     source-dirs:         app
     dependencies:
       - ngram
@@ -35,9 +35,4 @@ executables:
     ghc-options:
       - -threaded
       - -rtsopts
-
-tests:
-  suite:
-    main: tests/TestSuite.hs
-    dependencies:
-      - ngram
+      - -O0

@@ -60,10 +60,10 @@ main = do
       let model = fromSequences n trainInstances
       devInstances <- map lineToInstance <$> (liftM T.lines . liftM T.strip . T.readFile) dev
       print $ evaluateModel model n devInstances
-      withFile modelFile WriteMode (\ h -> BS.hPutStr h (encodeLazy model))
+      withFile modelFile WriteMode (\ h -> BS.hPutStr h ((compress . encodeLazy) model))
     Apply {..} -> do
       testInstances <- map lineToInstance <$> (liftM T.lines . liftM T.strip . T.readFile) test
-      loader <- decodeLazy <$> BS.readFile modelFile :: IO (Either String (Model T.Text Char))      
+      loader <- (decodeLazy . decompress) <$> BS.readFile modelFile :: IO (Either String (Model T.Text Char))      
       case loader of
         Right model -> print $ evaluateModel model n testInstances
         Left error -> print error

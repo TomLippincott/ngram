@@ -12,6 +12,19 @@ import Data.Sequence ((|>))
 import Data.Foldable (toList)
 
 
+--classify :: [
+
+
+-- | Calculates micro F-Score
+microFScore :: [a] -> [a] -> Double
+microFScore guess gold = error "unimp"
+
+
+-- | Calculates macro F-Score
+macroFScore :: [a] -> [a] -> Double
+macroFScore guess gold = error "unimp"
+
+
 -- | Splits a line of format ID<TAB>LABEL<TAB>TEXT into a
 --   (label, document) tuple of (Text, [Char]).
 lineToInstance :: T.Text -> (T.Text, [Char])
