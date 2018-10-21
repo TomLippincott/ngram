@@ -22,9 +22,9 @@ import Control.Monad (join, liftM)
 import qualified Data.List as L
 import Data.Foldable (toList)
 import qualified Data.Maybe as Maybe
---import Codec.Compression.PPM.Utils (windows)
 import Data.Serialize (Serialize)
 import GHC.Generics (Generic)
+
 
 -- | Trie nodes may have an optional arbitrary value, and each edge is
 --   associated with a particular value seen in the input sequences.

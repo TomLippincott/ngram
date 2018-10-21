@@ -3,6 +3,9 @@
 
 module Codec.Compression.PPM.Utils ( lineToInstance
                                    , revWindows
+                                   , accuracy
+                                   , microFScore
+                                   , macroFScore
                                    ) where
 
 
@@ -12,17 +15,28 @@ import Data.Sequence ((|>))
 import Data.Foldable (toList)
 
 
---classify :: [
+-- | Calculates accuracy
+accuracy :: (Eq a) => [a] -> [a] -> Double
+accuracy golds guesses = correct / total
+  where
+    total = (fromIntegral . length) golds
+    correct = (fromIntegral . length) $ [x | (x, y) <- zip golds guesses, x == y]
 
 
 -- | Calculates micro F-Score
-microFScore :: [a] -> [a] -> Double
-microFScore guess gold = error "unimp"
+microFScore :: (Eq a) => [a] -> [a] -> Double
+microFScore guess gold = 1.0
+  where
+    precs = []
+    recs = []
 
 
 -- | Calculates macro F-Score
-macroFScore :: [a] -> [a] -> Double
-macroFScore guess gold = error "unimp"
+macroFScore :: (Eq a) => [a] -> [a] -> Double
+macroFScore guess gold = 1.0
+  where
+    precs = []
+    recs = []
 
 
 -- | Splits a line of format ID<TAB>LABEL<TAB>TEXT into a

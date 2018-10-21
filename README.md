@@ -1,15 +1,29 @@
-# NGrams
+# NGram
 
 This is a code base for experimenting with various approaches to n-gram-based
-text modeling.  To get started, run:
+text modeling.
 
-```bash
-stack build
-stack install
+## Compiling
+
+First install [Stack](https://docs.haskellstack.org) somewhere on your `PATH`.  For example, for `~/.local/bin`:
+
+```
+wget https://get.haskellstack.org/stable/linux-x86_64.tar.gz -O -|tar xpfz - -C /tmp
+cp /tmp/stack-*/stack ~/.local/bin
+rm -rf /tmp/stack-*
 ```
 
-This will build and install the library and binary commands.  Generally,
-the commands expect data to be text files where each line has the format:
+Then, while in the directory of this README file, run:
+
+```
+stack build
+```
+
+The first time this runs will take a while, 10 or 15 minutes, as it builds an entire Haskell environment from scratch.  Subsequent compilations are very fast.
+
+## Running
+
+Generally, the commands expect data to be text files where each line has the format:
 
 ```
 ${id}<TAB>${label}<TAB>${text}
@@ -50,7 +64,7 @@ Dev accuracy: 0.8566666666666667
 The model can then be applied to new data:
 
 ```bash
-sh> ppm apply --test test.txt --modelFile model.gz --n 4 --scoresFile scores.txt
+sh> stack exec -- ppm apply --test test.txt --modelFile model.gz --n 4 --scoresFile scores.txt
 ```
 
 The value of `--n` can also be less than the model size, which will run a bit 

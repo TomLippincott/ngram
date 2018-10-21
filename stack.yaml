@@ -15,7 +15,7 @@
 # resolver:
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
-resolver: lts-10.1
+resolver: lts-12.9
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -40,29 +40,8 @@ packages:
 #- ../concrete-haskell
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
-extra-deps: []
-#  - bzlib-0.5.0.5
-#  - thrift-0.10.0
-#  - zip-conduit-0.2.2.2
-#  - cryptohash-conduit-0.1.1
-
-  #   - containers-0.5.10.2
-#   - bzlib-0.5.0.5
-#   - bzlib-conduit-0.2.1.4
-#   - concrete-haskell-autogen-0.0.0.1
-#   - conduit-1.2.12
-#   - deepseq-1.4.3.0
-#   - megaparsec-6.3.0
-#   - scientific-0.3.5.1
-#   - thrift-0.10.0
-#   - vector-0.10.12.2
-#   - zip-conduit-0.2.2.2
-#   - directory-1.2.7.1
-#   - primitive-0.5.4.0
-#   - time-1.5.0.1
-#   - transformers-0.4.3.0
-
-
+#extra-deps:
+#  -
   
 # Override default flag values for local packages and extra-deps
 flags: {}
@@ -87,4 +66,4 @@ extra-package-dbs: []
 #
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
-#allow-newer: true
+# allow-newer: true

@@ -40,11 +40,13 @@ instance (Serialize a, Ord a) => Serialize (Entry a)
 
 type Model l a = Trie (Entry a) (Map l Integer)
 
+
 classifySequence :: (Ord l, Ord a, Show l, Show a) => Trie (Entry a) (Map l Integer) -> Int -> [a] -> l
 classifySequence m n xs = label
   where
     scores = Map.toList $ scoreSequence m n xs
     label = fst $ maximumBy (\(_, x) (_, y) -> compare x y) scores
+
 
 scoreSequence :: (Ord l, Ord a, Show l, Show a) => Trie (Entry a) (Map l Integer) -> Int -> [a] -> Map l Double
 scoreSequence m n xs = total
@@ -54,8 +56,10 @@ scoreSequence m n xs = total
     scores = map (scoreGram m) grams
     total = Map.unionsWith (+) (scores)
 
+
 oneTerm :: (Ord l, Show l) => Map l Integer -> Map l Integer -> Map l (Maybe Float)
 oneTerm numers denoms = Map.empty
+
 
 scoreGram :: (Ord l, Ord a, Show l, Show a) => Trie (Entry a) (Map l Integer) -> [(Entry a)] -> Map l Double
 scoreGram tr ns@(_:ns') = Map.map (toProb 256) vals
@@ -95,3 +99,4 @@ fromSequences n xs = model
   where
     xs' = map (\(l, is) -> [(l, x) | x <- revWindows n (replicate (n - 1) Start ++ (map Entry is))]) xs
     model = Trie.labeledSuffixCountTrie (concat xs')
+    

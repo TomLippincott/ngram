@@ -11,7 +11,8 @@ extra-source-files:
 
 synopsis:            Ngram models for compressing and classifying text.
 category:            natural-language-processing, machine-learning
-description:         Please see the README on Github at <https://github.com/TomLippincott/ngram#README.md>
+description:         A library and collection of commands for training,
+                     evaluating, and applying n-gram-based sequence models.
 
 dependencies:
   - base >= 4.7 && < 5
@@ -24,8 +25,8 @@ library:
   source-dirs: src
  
 executables:
-  ppm:
-    main:                PPMClassifier.hs
+  ngramClassifier:
+    main:                NGramClassifier.hs
     source-dirs:         app
     dependencies:
       - ngram
@@ -35,4 +36,5 @@ executables:
     ghc-options:
       - -threaded
       - -rtsopts
-      - -O0
+
+      
