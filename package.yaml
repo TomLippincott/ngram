@@ -20,6 +20,10 @@ dependencies:
   - containers >=0.5.10.2
   - cereal >=0.5.4.0
   - cereal-text >=0.1.0.2
+
+default-extensions:
+  - Strict
+  - StrictData
   
 library:
   source-dirs: src
