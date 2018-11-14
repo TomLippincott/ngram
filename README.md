@@ -57,14 +57,14 @@ quite be reduced to more widespread approaches to smoothing, but empirically
 tends to outperform them on short documents.  To create a PPM model, run:
 
 ```bash
-sh> stack exec -- ngramClassifier train --train train.txt --dev dev.txt --n 4 --modelFile model.gz
+sh> stack exec -- ngramClassifier train --trainFile train.txt --devFile dev.txt --n 4 --modelFile model.gz
 Dev accuracy: 0.8566666666666667
 ```
 
 The model can then be applied to new data:
 
 ```bash
-sh> stack exec -- ngramClassifier apply --test test.txt --modelFile model.gz --n 4 --scoresFile scores.txt
+sh> stack exec -- ngramClassifier apply --testFile test.txt --modelFile model.gz --n 4 --scoresFile scores.txt
 ```
 
 The value of `--n` can also be less than the model size, which will run a bit 

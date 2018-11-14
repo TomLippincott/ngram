@@ -1,5 +1,5 @@
 name:                ngram
-version:             0.1.0.0
+version:             0.1.0.1
 github:              TomLippincott/ngram
 license:             BSD3
 author:              Tom Lippincott
@@ -13,7 +13,6 @@ synopsis:            Ngram models for compressing and classifying text.
 category:            natural-language-processing, machine-learning
 description:         A library and collection of commands for training,
                      evaluating, and applying n-gram-based sequence models.
-
 dependencies:
   - base >= 4.7 && < 5
   - text >=1.2.2
@@ -39,6 +38,4 @@ executables:
       - bytestring >=0.10.8.1
     ghc-options:
       - -threaded
-      - -rtsopts
-
       
