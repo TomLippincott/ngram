@@ -9,8 +9,10 @@
 
 module Codec.Compression.PPM ( Model
                              , fromSequences
+                             , updateFromSequences                             
                              , classifySequence
                              , scoreSequence
+                             , rectifyModel
                              ) where
 
 import Prelude hiding (lookup)
@@ -34,12 +36,19 @@ import Debug.Trace (traceShowId)
 import Data.Serialize (Serialize)
 import GHC.Generics (Generic)
 
+
 data Entry a = Entry a | Start deriving (Show, Read, Ord, Eq, Generic)
 
 instance (Serialize a, Ord a) => Serialize (Entry a)
 
 type Model l a = Trie (Entry a) (Map l Integer)
 
+
+rectifyModel :: (Show l, Ord l, Show a, Ord a) => Model l a -> Model l a
+rectifyModel Trie{..} = Trie (Map.filter (\c -> c /= 0) value') (Map.map rectifyModel edges)
+  where
+    mv = minimum (Map.elems value)
+    value' = Map.map (\c -> c - mv) value
 
 classifySequence :: (Ord l, Ord a, Show l, Show a) => Trie (Entry a) (Map l Integer) -> Int -> [a] -> l
 classifySequence m n xs = label
@@ -94,9 +103,16 @@ toCounts tr xs = go start tr xs
         acc' = Map.unionWith (\a b -> a ++ b) acc lvalue
 
 
-fromSequences :: (Ord l, Ord a, Show l, Show a) => Int -> [(l, [a])] -> Trie (Entry a) (Map l Integer)
+fromSequences :: (Ord l, Ord a, Show l, Show a) => Int -> [(Integer, l, [a])] -> Trie (Entry a) (Map l Integer)
 fromSequences n xs = model
   where
-    xs' = map (\(l, is) -> [(l, x) | x <- revWindows n (replicate (n - 1) Start ++ (map Entry is))]) xs
+    xs' = map (\(i, l, is) -> [(i, l, x) | x <- revWindows n (replicate (n - 1) Start ++ (map Entry is))]) xs
     model = Trie.labeledSuffixCountTrie (concat xs')
+
+
+updateFromSequences :: (Ord l, Ord a, Show l, Show a) => Trie (Entry a) (Map l Integer) -> Int -> [(Integer, l, [a])] -> Trie (Entry a) (Map l Integer)
+updateFromSequences tr n xs = model
+  where
+    xs' = map (\(i, l, is) -> [(i, l, x) | x <- revWindows n (replicate (n - 1) Start ++ (map Entry is))]) xs
+    model = Trie.updateLabeledSuffixCountTrie tr (concat xs')
     

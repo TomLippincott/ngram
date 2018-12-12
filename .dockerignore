@@ -1,0 +1,7 @@
+.stack-work
+.git
+*#
+*~
+Dockerfile
+data*
+scripts*

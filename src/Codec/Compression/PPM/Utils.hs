@@ -9,7 +9,8 @@ module Codec.Compression.PPM.Utils ( lineToInstance
                                    ) where
 
 
-import qualified Data.Text.Lazy as T
+import Prelude hiding (drop)
+import Data.Text (Text, unpack, drop, breakOn)
 import qualified Data.Sequence as Seq
 import Data.Sequence ((|>))
 import Data.Foldable (toList)
@@ -41,11 +42,13 @@ macroFScore guess gold = 1.0
 
 -- | Splits a line of format ID<TAB>LABEL<TAB>TEXT into a
 --   (label, document) tuple of (Text, [Char]).
-lineToInstance :: T.Text -> (T.Text, [Char])
-lineToInstance l = (label, T.unpack (T.drop 1 text))
+--   If LABEL is prefixed with a "-", treat as a negative
+--   label.
+lineToInstance :: Text -> (Text, [Char])
+lineToInstance l = (label, unpack (drop 1 text))
   where
-    (id, rest) = T.breakOn "\t" l
-    (label, text) = T.breakOn "\t" (T.drop 1 rest)
+    (id, rest) = breakOn "\t" l
+    (label, text) = breakOn "\t" (drop 1 rest)
 
 
 -- | Returns all subsequences of a given length.
