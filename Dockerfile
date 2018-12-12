@@ -28,6 +28,4 @@ WORKDIR /opt/ngram
 
 COPY --from=build /root/ngram/.stack-work/install/x86_64-linux/lts-12.9/8.4.3/bin/ngramClassifier .
 
-COPY --from=build /root/ngram/model.gz .
-
 ENTRYPOINT ["/opt/ngram/ngramClassifier", "--"]

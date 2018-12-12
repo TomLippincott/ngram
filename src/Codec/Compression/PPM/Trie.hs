@@ -12,6 +12,7 @@ module Codec.Compression.PPM.Trie ( Trie(..)
                                   , Context(..)
                                   , lookup
                                   , labeledSuffixCountTrie
+                                  , updateLabeledSuffixCountTrie                                  
                                   ) where
 
 import Prelude hiding (lookup)
@@ -37,25 +38,30 @@ instance (Serialize e, Serialize v, Ord e, Ord v) => Serialize (Trie e v)
 
 data Context v c = Context Int
 
-
-addSequenceWithLabel :: (Ord l, Ord e) => Trie e (Map l Integer) -> (l, [e]) -> Trie e (Map l Integer)
-addSequenceWithLabel (Trie{..}) (l, []) = Trie { value=value'
+-- modifyNode :: l -> Map l Integer -> Map l Integer
+addSequenceWithLabel :: (Ord l, Ord e) => Trie e (Map l Integer) -> (Integer, l, [e]) -> Trie e (Map l Integer)
+addSequenceWithLabel (Trie{..}) (i, l, []) = Trie { value=value'
                                                , edges=edges
                                                }
   where
-    value' = Map.insertWith (+) l 1 value
+    value' = Map.insertWith (+) l i value
 
-addSequenceWithLabel (Trie{..}) (l, (x:xs)) = Trie { value=value'
-                                                   , edges=edges'
-                                                   }
+
+addSequenceWithLabel (Trie{..}) (i, l, (x:xs)) = Trie { value=value'
+                                                            , edges=edges'
+                                                            }
   where
     old = Map.findWithDefault (Trie Map.empty Map.empty) x edges
-    edges' = Map.insert x (addSequenceWithLabel old (l, xs)) edges
-    value' = Map.insertWith (+) l 1 value
+    edges' = Map.insert x (addSequenceWithLabel old (i, l, xs)) edges
+    value' = Map.insertWith (+) l i value
     
 
-labeledSuffixCountTrie :: (Ord l, Ord e) => [(l, [e])] -> Trie e (Map l Integer)
+labeledSuffixCountTrie :: (Ord l, Ord e) => [(Integer, l, [e])] -> Trie e (Map l Integer)
 labeledSuffixCountTrie xs = foldl addSequenceWithLabel (Trie Map.empty Map.empty) xs
+
+
+updateLabeledSuffixCountTrie :: (Ord l, Ord e) => Trie e (Map l Integer) -> [(Integer, l, [e])] -> Trie e (Map l Integer)
+updateLabeledSuffixCountTrie tr xs = foldl addSequenceWithLabel tr xs
 
 
 lookup :: (Ord e) => [e] -> Trie e v -> Maybe (Trie e v)
