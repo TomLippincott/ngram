@@ -2,7 +2,7 @@
 
 N=4
 TMP=/tmp
-WORK=${TMP}/haskseg-work
+WORK=${TMP}/ngram-work
 
 mkdir -p ${WORK}
 echo "Building model on 500 instances..."
