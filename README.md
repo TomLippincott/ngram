@@ -1,11 +1,38 @@
 # NGram
 
 This is a code base for experimenting with various approaches to n-gram-based
-text modeling.  To run it via Docker, see the final section of this README.
+text modeling.  The easiest way to use it to immediately train and apply models
+is via Docker:
+
+```
+docker pull hltcoe/ngram
+docker run -t ngram -p 8080:8080 -d hltcoe/ngram serve --modelType characters
+```
+
+This starts a container to train and apply character-based models, and exposes 
+a REST API on port 8080.  You can see example usage in `scripts/ngram_rest_client.py` 
+for each end-point:
+
+1.  GET /info {} -> {"modelType" : string, "n" : int}
+2.  PUT /reset {"n" : int} -> {}
+3.  PATCH /train {"docs" : [doc]} -> {}
+4.  GET /apply {"docs" : [doc], "n" : int} -> {"results" : [result]}
+5.  GET /pull_model {} -> {"state" : string}
+6.  PUT /push_model {"state" : string} -> {}
+
+A "doc" is a JSON object with "id", "label", and "text" fields, and a "result" is a
+JSON object with the same, and an additional "probabilities" field that maps each
+label to a log-probability.
+
+5. and 6. together allow you to save and restore models.  Note that the server is 
+started with a particular *type* of model (byte, character, or word) and this
+cannot be changed dynamically (yet): runtime errors will occur trying to restore
+incompatible models.
 
 ## Compiling
 
-First install [Stack](https://docs.haskellstack.org) somewhere on your `PATH`.  For example, for `~/.local/bin`:
+To compile the code directly, first install [Stack](https://docs.haskellstack.org) somewhere on 
+your `PATH`.  For example, using `~/.local/bin`:
 
 ```
 wget https://get.haskellstack.org/stable/linux-x86_64.tar.gz -O -|tar xpfz - -C /tmp
@@ -20,12 +47,16 @@ stack build
 stack install
 ```
 
-The first time this runs will take a while, 10 or 15 minutes, as it builds an entire Haskell environment from scratch: subsequent compilations are very fast.  The `ngramClassifier` binary will be installed in `~/.local/bin`, though you can also forego the `install` command and replace `ngramClassifier` with `stack exec -- ngramClassifier` in this guide.
+The first time this runs will take a while, 10 or 15 minutes, as it builds an 
+entire Haskell environment from scratch: subsequent compilations are very fast.  
+The `ngramClassifier` binary will be installed in `~/.local/bin`, though you can 
+also forego the `install` command and replace `ngramClassifier` with 
+`stack exec -- ngramClassifier` in this guide.
 
-## Basics
+## Testing
 
-Everything below is also illustrated by `scripts/run_tests.sh`, which uses small data files
-included in this repository:
+You can run a handful of tests by invoking `scripts/run_tests.sh`, which uses small 
+data files included in this repository:
 
 ```
 $ scripts/run_tests.sh 
@@ -42,9 +73,9 @@ Testing updated model of lower order...
 Accuracy: 0.773
 ```
 
-### Data formats
+### Data format for command-line tool
 
-The commands expect data to be text where each line has the format:
+The command-line invocations expect data to be text where each line has the format:
 
 ```
 ${id}<TAB>${label}<TAB>${text}
@@ -64,7 +95,7 @@ ${doc_id}<TAB>${gold_label_name}<TAB>${label_1_prob}<TAB>${label_2_prob}<TAB>...
 
 where probabilities are represented as natural logarithms.
 
-### Operation
+### Command-line operation
 
 Functionality is comprised of four sub-commands: `train`, `update`, `apply`, 
 and `evaluate`.  The sub-commands accept the `-h` and `--help` switch for
