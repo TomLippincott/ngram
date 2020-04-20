@@ -6,7 +6,7 @@ is via Docker:
 
 ```
 docker pull hltcoe/ngram
-docker run -t ngram -p 8080:8080 -d hltcoe/ngram serve --modelType characters
+docker run --name ngram -p 8080:8080 -d hltcoe/ngram serve --modelType chars
 ```
 
 This starts a container to train and apply character-based models, and exposes 
