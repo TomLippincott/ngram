@@ -55,7 +55,7 @@ def apply_func(args):
             if guess == res["label"]:
                 correct += 1
             total += 1
-    logging.info("Accuracy: %.3f", correct / total)
+    logging.info("Accuracy: %.3f", float(correct) / total)
     return resp
 
 def pull_func(args):
