@@ -16,14 +16,14 @@ module Main where
 
 import Prelude hiding (lookup, getContents, readFile, strip, lines, writeFile, Word(..))
 import qualified Data.ByteString.Lazy.Char8 as BS
-import Data.Maybe (fromMaybe, catMaybes)
+import Data.Maybe (fromMaybe, catMaybes, fromJust)
 import Data.Text (Text, strip, lines, stripPrefix, splitOn, pack, unpack, breakOn)
 import Data.Text.IO (getContents, readFile, hGetContents, hPutStr, writeFile, hPutStrLn)
 import Codec.Compression.GZip (compress, decompress)
 import Options.Generic (Generic, ParseRecord, Unwrapped, Wrapped, unwrapRecord, (:::), type (<?>)(..))
 import Control.Monad (join, liftM)
 import System.IO (withFile, IOMode(..), stdin, stderr, openFile, stdout, hClose, Handle(..))
-import Codec.Compression.PPM (fromSequences, Model, classifySequence, scoreSequence, updateFromSequences, rectifyModel, Entry(..), Element(..), Word(..), Byte(..), Server(..), Trie(..), lineToInstance, accuracy, microFScore, macroFScore, readBSFileOrStdin, readFileOrStdin, postprocessTrain, formatScores, writeFileOrStdout, writeBSFileOrStdout)
+import Codec.Compression.PPM (fromSequences, Model, classifySequence, scoreSequence, updateFromSequences, rectifyModel, Entry(..), Element(..), Word(..), Byte(..), Server(..), Trie(..), lineToInstance, accuracy, microFScore, macroFScore, readBSFileOrStdin, readFileOrStdin, postprocessTrain, formatScores, writeFileOrStdout, writeBSFileOrStdout, textToByteString, byteStringToText)
 import Data.Serialize (encodeLazy, decodeLazy)
 import Data.Serialize.Text
 import Data.List (sortOn, maximumBy, intercalate)
@@ -41,6 +41,9 @@ import qualified Data.HashMap.Strict as HMap
 import Data.Proxy (Proxy(..))
 import Data.IORef (newIORef)
 import Control.DeepSeq (deepseq, force, ($!!), NFData, NFData1)
+import qualified Data.Store as Store
+import Data.Store (Store(..), PeekException)
+
 
 data Parameters w = Train { trainFile :: w ::: Maybe String <?> "Training data file"
                           , n :: w ::: Int <?> "Maximum context size"
@@ -89,31 +92,43 @@ main' proxy ps modelType' = do
     Train {..} -> do
       trainInstances <- (liftM postprocessTrain) $ map lineToInstance <$> (liftM (lines . strip) . readFileOrStdin) trainFile :: IO [(Integer, Text, [e])]
       let model = fromSequences n trainInstances :: Model Text e
-      writeBSFileOrStdout modelFile (encode model)
+          state = (byteStringToText . Store.encode) (model, n, pack modelType')
+      writeFile (fromJust modelFile) state
+      --writeBSFileOrStdout modelFile (encode model)
     Update {..} -> do
       case length $ catMaybes [modelFile, trainFile] of 0 -> hPutStrLn stderr "Error: You must specify at least one of (--trainFile|--modelFile)!"
                                                         _ -> do
                                                           trainInstances <- (liftM postprocessTrain) $ map lineToInstance <$> (liftM (lines . strip) . readFileOrStdin) trainFile
-                                                          Right model <- readBSFileOrStdin modelFile
+                                                          str <- readFile (fromJust modelFile)
+                                                          let Right (model, n, modelType) = (Store.decode . textToByteString) str :: Either PeekException (Model Text e, Int, Text)                                                          
+                                                          --Right model <- readBSFileOrStdin modelFile
                                                           let model' = updateFromSequences model n trainInstances :: Model Text e
-                                                          writeBSFileOrStdout updatedModelFile (encode model')                                                          
+                                                              state = (byteStringToText . Store.encode) (model', n, modelType)
+                                                          writeFile (fromJust updatedModelFile) state
+                                                          --writeBSFileOrStdout updatedModelFile (encode model')                                                          
     Apply {..} -> do
       case length $ catMaybes [modelFile, testFile] of 0 -> hPutStrLn stderr "Error: You must specify at least one of (--testFile|--modelFile)!"
                                                        _ -> do
-                                                         Right model <- readBSFileOrStdin modelFile :: IO (Either PeekException (Model Text e))
+                                                         str <- readFile (fromJust modelFile)
+                                                         let Right (model, n, modelType) = (Store.decode . textToByteString) str :: Either PeekException (Model Text e, Int, Text)
                                                          testInstances <- map lineToInstance <$> (liftM (lines . strip) . readFileOrStdin) testFile
                                                          let scores = map (scoreSequence model n . snd) testInstances
                                                              guesses = map (fst . maximumBy (\(_, x) (_, y) -> compare x y) . Map.toList) scores              
                                                          writeFileOrStdout scoresFile (pack (formatScores (zip3 guesses testInstances scores)))
-    -- Evaluate {..} -> do
-    --   case length $ catMaybes [modelFile, testFile] of 0 -> hPutStrLn stderr "Error: You must specify at least one of --testFile|--modelFile!"
-    --                                                    _ -> do
-    --                                                      testInstances <- (liftM postprocessTrain) $ map lineToInstance <$> (liftM (lines . strip) . readFileOrStdin) testFile
-    --                                                      Right model <- readBSFileOrStdin modelFile :: IO (Either PeekException (Model Text e))
-    --                                                      let scores = undefined --evaluateModel model n testInstances
-    --                                                          scores' = map snd (Map.toList scores)
-    --                                                          macro = (sum scores') / (fromIntegral $ length scores')
-    --                                                      hPutStrLn stderr (pack $ printf "Macro f-score: %.3f" macro)
+    Evaluate {..} -> do
+      case length $ catMaybes [modelFile, testFile] of 0 -> hPutStrLn stderr "Error: You must specify at least one of (--testFile|--modelFile)!"
+                                                       _ -> do
+                                                         str <- readFile (fromJust modelFile)
+                                                         let Right (model, n, modelType) = (Store.decode . textToByteString) str :: Either PeekException (Model Text e, Int, Text)
+                                                         testInstances <- map lineToInstance <$> (liftM (lines . strip) . readFileOrStdin) testFile                                                         
+                                                         let golds = map fst testInstances
+                                                             scores = map (scoreSequence model n . snd) testInstances
+                                                             guesses = map (fst . maximumBy (\(_, x) (_, y) -> compare x y) . Map.toList) scores
+                                                             macros = macroFScore guesses golds
+                                                             macro = (sum (Map.elems macros)) / (fromIntegral $ Map.size macros)
+                                                             acc = accuracy guesses golds
+                                                         hPutStrLn stderr (pack $ printf "Macro f-score: %.3f\nAccuracy: %.3f" macro acc)
+                                                         return ()
     Serve {..} -> do
       let hostName' = fromMaybe "0.0.0.0" hostName
           port' = fromMaybe 8080 port

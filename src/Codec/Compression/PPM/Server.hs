@@ -13,6 +13,8 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Codec.Compression.PPM.Server (Server(..)
+                                    , textToByteString
+                                    , byteStringToText
                                     ) where
 
 
