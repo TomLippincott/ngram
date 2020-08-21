@@ -75,8 +75,8 @@ macroFScore' v guess gold = if true_pos == 0 then 0 else (2 * (prec * recall) / 
 
 -- | Splits a line of format ID<TAB>LABEL<TAB>TEXT into a
 --   (label, document) tuple of (Text, [Element]).
-lineToInstance :: (Element e) => Text -> (Text, [e])
-lineToInstance l = (label, fromLine $ unpack (drop 1 text))
+lineToInstance :: (Element e) => Text -> Maybe (Text, [e])
+lineToInstance l = if l == "" then Nothing else Just $ (label, fromLine $ unpack (drop 1 text))
   where
     (id, rest) = breakOn "\t" l
     (label, text) = breakOn "\t" (drop 1 rest)
@@ -149,10 +149,16 @@ toProb alpha cts = go cts 0.0
 --     golds = map fst xs'
 --     guesses = map (classifySequence model n . snd) xs'
 
-formatScores :: (Element e) => [(Text, (Text, [e]), Map Text Double)] -> String
-formatScores xs = intercalate "\n" (map (\(g, (l, t), ps) -> printf "%s\t%s\t%s\t%s" l g (toLine t) (formatProb ps)) xs)
+formatScores :: (Element e) => [(Maybe Text, Maybe (Text, [e]), Maybe (Map Text Double))] -> String
+formatScores xs = intercalate "\n" (map formatScores' xs)
+-- (\(g, (l, t), ps) -> printf "%s\t%s\t%s\t%s" l g (toLine t) (formatProb ps)) xs)
+--  where
+--    formatProb ps = intercalate " " (map (\(k, v) -> printf "%s=%.6f" k v) (Map.toList ps))
+
+formatScores' ((Just g), (Just (l, t)), (Just ps)) = printf "%s\t%s\t%s\t%s" l g (toLine t) (formatProb ps)
   where
-    formatProb ps = intercalate " " (map (\(k, v) -> printf "%s=%.6f" k v) (Map.toList ps))
+    formatProb ps = intercalate " " (map (\(k, v) -> printf "%s=%.6f" k v) (Map.toList ps))    
+formatScores' _ = ""
 
 postproc :: (Element e) => (Text, [e]) -> [(Integer, Text, [e])]
 postproc (l, cs) = [(v, l', cs) | (v, l') <- labels]

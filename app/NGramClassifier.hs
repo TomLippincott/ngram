@@ -90,7 +90,7 @@ main' :: forall e . (NFData e, Element e, Ord e, Hashable e, Read e, Show e, Sto
 main' proxy ps modelType' = do
   case ps of
     Train {..} -> do
-      trainInstances <- (liftM postprocessTrain) $ map lineToInstance <$> (liftM (lines . strip) . readFileOrStdin) trainFile :: IO [(Integer, Text, [e])]
+      trainInstances <- (liftM postprocessTrain) $ catMaybes <$> map lineToInstance <$> (liftM (lines . strip) . readFileOrStdin) trainFile :: IO [(Integer, Text, [e])]
       let model = fromSequences n trainInstances :: Model Text e
           state = (byteStringToText . Store.encode) (model, n, pack modelType')
       writeFile (fromJust modelFile) state
@@ -98,7 +98,7 @@ main' proxy ps modelType' = do
     Update {..} -> do
       case length $ catMaybes [modelFile, trainFile] of 0 -> hPutStrLn stderr "Error: You must specify at least one of (--trainFile|--modelFile)!"
                                                         _ -> do
-                                                          trainInstances <- (liftM postprocessTrain) $ map lineToInstance <$> (liftM (lines . strip) . readFileOrStdin) trainFile
+                                                          trainInstances <- (liftM postprocessTrain) $ catMaybes <$> map lineToInstance <$> (liftM (lines . strip) . readFileOrStdin) trainFile
                                                           str <- readFile (fromJust modelFile)
                                                           let Right (model, n, modelType) = (Store.decode . textToByteString) str :: Either PeekException (Model Text e, Int, Text)                                                          
                                                           --Right model <- readBSFileOrStdin modelFile
@@ -112,15 +112,15 @@ main' proxy ps modelType' = do
                                                          str <- readFile (fromJust modelFile)
                                                          let Right (model, n, modelType) = (Store.decode . textToByteString) str :: Either PeekException (Model Text e, Int, Text)
                                                          testInstances <- map lineToInstance <$> (liftM (lines . strip) . readFileOrStdin) testFile
-                                                         let scores = map (scoreSequence model n . snd) testInstances
-                                                             guesses = map (fst . maximumBy (\(_, x) (_, y) -> compare x y) . Map.toList) scores              
+                                                         let scores = map (liftM (scoreSequence model n . snd)) testInstances
+                                                             guesses = map (liftM (fst . maximumBy (\(_, x) (_, y) -> compare x y) . Map.toList)) scores              
                                                          writeFileOrStdout scoresFile (pack (formatScores (zip3 guesses testInstances scores)))
     Evaluate {..} -> do
       case length $ catMaybes [modelFile, testFile] of 0 -> hPutStrLn stderr "Error: You must specify at least one of (--testFile|--modelFile)!"
                                                        _ -> do
                                                          str <- readFile (fromJust modelFile)
                                                          let Right (model, n, modelType) = (Store.decode . textToByteString) str :: Either PeekException (Model Text e, Int, Text)
-                                                         testInstances <- map lineToInstance <$> (liftM (lines . strip) . readFileOrStdin) testFile                                                         
+                                                         testInstances <- catMaybes <$> map lineToInstance <$> (liftM (lines . strip) . readFileOrStdin) testFile                                                         
                                                          let golds = map fst testInstances
                                                              scores = map (scoreSequence model n . snd) testInstances
                                                              guesses = map (fst . maximumBy (\(_, x) (_, y) -> compare x y) . Map.toList) scores
